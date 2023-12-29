@@ -6,6 +6,9 @@ const router: Router = express.Router();
 router.get("/", (req: Request, res: Response) => {
   return res.status(200).send(games);
 });
+
+router.get("/:id", (req: Request, res: Response) => {});
+
 router.post("/", (req: Request, res: Response) => {
   if (!req.body || !req.body.userId || !req.body.stake) {
     res.status(400).send({ message: "User ID and stake are required" });
@@ -33,5 +36,22 @@ router.post("/", (req: Request, res: Response) => {
   foundUser.balance -= stake;
   games.push(game);
   res.status(200).send({ message: "Game created" });
+});
+
+router.delete("/:id", (req: Request, res: Response) => {
+  const { id } = req.params;
+  const foundGame = find(games, id, "id");
+  if (!foundGame) {
+    res.status(400).send({ message: "Game not found" });
+    return;
+  }
+  const foundUser = find(users, foundGame.userId, "id");
+  if (!foundUser) {
+    res.status(400).send({ message: "User not found" });
+    return;
+  }
+  if (foundGame.won) foundUser.balance += foundGame.stake;
+  games.splice(games.indexOf(foundGame), 1);
+  res.status(200).send({ message: "Game deleted" });
 });
 export default router;

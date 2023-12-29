@@ -11,6 +11,13 @@ export interface GameInterface {
   userId: string;
   stake: number;
   date: Date;
-  // won: boolean;
+  won: boolean;
   // numbers: number[];
+}
+
+export interface Envs{
+  ATLAS_URI:string;
+  COLLECTION_USERS:string;
+  COLLECTION_GAMES:string;
+  DB:string;
 }
