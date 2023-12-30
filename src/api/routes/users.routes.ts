@@ -1,13 +1,14 @@
 import express, { Request, Response, Router } from "express";
-import { users } from "../../db/db";
 import { isUnique } from "../../utils";
 import User from "../../classes/User";
+import { db } from "..";
 const router: Router = express.Router();
-router.get("/", (req: Request, res: Response) => {
+router.get("/", async (req: Request, res: Response) => {
+  const users = await db.getUsers();
   return res.status(200).send(users);
 });
 
-router.post("/", (req: Request, res: Response) => {
+router.post("/", async (req: Request, res: Response) => {
   if (!req.body || !req.body.name || !req.body.password) {
     res.status(400).send({ message: "Name and password are required" });
     return;
@@ -18,15 +19,18 @@ router.post("/", (req: Request, res: Response) => {
     return;
   }
 
+  const users = await db.getUsers();
+
   if (!isUnique(users, name, "name")) {
     res.status(400).send({ message: "Name must be unique" });
     return;
   }
 
   const user = new User(name, password);
-  users.push(user);
+  db.createUser(user);
   res.status(200).send(user);
   return;
 });
 
+router.patch("/:id", async (req: Request, res: Response) => {});
 export default router;

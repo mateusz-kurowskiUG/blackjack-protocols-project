@@ -1,4 +1,5 @@
 export interface UserInterface {
+  _id?: string;
   id: string;
   name: string;
   balance: number;
@@ -7,6 +8,7 @@ export interface UserInterface {
 }
 
 export interface GameInterface {
+  _id?: string;
   id: string;
   userId: string;
   stake: number;
@@ -15,9 +17,9 @@ export interface GameInterface {
   // numbers: number[];
 }
 
-export interface Envs{
-  ATLAS_URI:string;
-  COLLECTION_USERS:string;
-  COLLECTION_GAMES:string;
-  DB:string;
+export interface Envs {
+  ATLAS_URI: string;
+  COLLECTION_USERS: string;
+  COLLECTION_GAMES: string;
+  DB: string;
 }

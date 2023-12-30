@@ -1,20 +1,29 @@
 import express, { Request, Response, Router } from "express";
-import { games, users } from "../../db/db";
 import { find } from "../../utils";
 import Game from "../../classes/Game";
+import { db } from "..";
 const router: Router = express.Router();
-router.get("/", (req: Request, res: Response) => {
+router.get("/", async (req: Request, res: Response) => {
+  const games = await db.getGames();
   return res.status(200).send(games);
 });
 
-router.get("/:id", (req: Request, res: Response) => {});
+router.get("/:id", async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const game = await db.getGame(id);
+  if (!game) {
+    res.status(400).send({ message: "Game not found" });
+    return;
+  }
+  res.status(200).send(game);
+});
 
-router.post("/", (req: Request, res: Response) => {
+router.post("/", async (req: Request, res: Response) => {
   if (!req.body || !req.body.userId || !req.body.stake) {
     res.status(400).send({ message: "User ID and stake are required" });
   }
   const { userId, stake } = req.body;
-  const foundUser = find(users, userId, "id");
+  const foundUser = await db.getUser(userId);
   if (!foundUser) {
     res.status(400).send({ message: "User not found" });
     return;
@@ -33,25 +42,29 @@ router.post("/", (req: Request, res: Response) => {
   }
 
   const game = new Game(userId, stake);
-  foundUser.balance -= stake;
-  games.push(game);
+  db.updateUser(foundUser, { balance: foundUser.balance - stake });
+  db.createGame(game);
   res.status(200).send({ message: "Game created" });
 });
 
-router.delete("/:id", (req: Request, res: Response) => {
+router.delete("/:id", async (req: Request, res: Response) => {
   const { id } = req.params;
-  const foundGame = find(games, id, "id");
+  const foundGame = await db.getGame(id);
   if (!foundGame) {
     res.status(400).send({ message: "Game not found" });
     return;
   }
-  const foundUser = find(users, foundGame.userId, "id");
+  const foundUser = await db.getUser(foundGame.userId);
   if (!foundUser) {
     res.status(400).send({ message: "User not found" });
     return;
   }
   if (foundGame.won) foundUser.balance += foundGame.stake;
-  games.splice(games.indexOf(foundGame), 1);
+  const deleted = await db.deleteGame(id);
+  if (!deleted.deletedCount) {
+    res.status(400).send({ message: "Game not found" });
+    return;
+  }
   res.status(200).send({ message: "Game deleted" });
 });
 export default router;
