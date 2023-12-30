@@ -1,5 +1,4 @@
 import express, { Request, Response, Router } from "express";
-import { find } from "../../utils";
 import Game from "../../classes/Game";
 import { db } from "..";
 const router: Router = express.Router();
@@ -42,9 +41,12 @@ router.post("/", async (req: Request, res: Response) => {
   }
 
   const game = new Game(userId, stake);
-  db.updateUser(foundUser, { balance: foundUser.balance - stake });
-  db.createGame(game);
-  res.status(200).send({ message: "Game created" });
+  const created = await db.createGame(userId, game);
+  if (!created) {
+    res.status(400).send({ message: "Game not created" });
+    return;
+  }
+  res.status(200).send(created);
 });
 
 router.delete("/:id", async (req: Request, res: Response) => {

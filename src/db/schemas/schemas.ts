@@ -1,5 +1,4 @@
-import mongoose from "mongoose";
-const { Schema } = mongoose;
+import { Schema } from "mongoose";
 
 export const Game = new Schema({
   id: String,
