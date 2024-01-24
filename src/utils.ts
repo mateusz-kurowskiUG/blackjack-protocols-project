@@ -1,12 +1,5 @@
-import { games, users } from "./db/db";
-import { Envs, GameInterface, UserInterface } from "./interfaces/interfaces";
+import { Envs } from "./interfaces/interfaces";
 import dotenv from "dotenv";
-
-export const isUnique = (
-  collection: UserInterface[] | GameInterface[],
-  value: string | number,
-  key: string,
-) => collection.every((item) => item[key] !== value);
 
 export const getEnvs = (): Envs => {
   dotenv.config({ path: __dirname + "/.env" });

@@ -1,5 +1,4 @@
 import express, { Request, Response, Router } from "express";
-import Game from "../../classes/Game";
 import { db } from "..";
 const router: Router = express.Router();
 router.get("/", async (req: Request, res: Response) => {
