@@ -1,4 +1,4 @@
-import express, { Request, Response, createServer } from "express";
+import express, { Request, Response } from "express";
 import cors from "cors";
 import bodyParser from "body-parser";
 import fs from "fs";
@@ -28,6 +28,7 @@ const httpsServer = https.createServer(credentials, app);
 app.use("/users", usersRoutes);
 app.use("/games", gamesRoutes);
 app.use("/auth", authRoutes);
+
 app.get("/", (req: Request, res: Response) => {
   res.send("Got a GET request");
 });

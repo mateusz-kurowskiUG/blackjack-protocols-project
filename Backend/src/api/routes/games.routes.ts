@@ -1,12 +1,14 @@
 import express, { Request, Response, Router } from "express";
 import { db } from "..";
+import verifyToken from "../middlewares/authMiddleware";
+import { INewGame } from "../../interfaces/interfaces";
 const router: Router = express.Router();
-router.get("/", async (req: Request, res: Response) => {
+router.get("/", verifyToken, async (req: Request, res: Response) => {
   const games = await db.getGames();
   return res.status(200).send(games);
 });
 
-router.get("/:id", async (req: Request, res: Response) => {
+router.get("/:id", verifyToken, async (req: Request, res: Response) => {
   const { id } = req.params;
   const game = await db.getGame(id);
   if (!game) {
@@ -16,7 +18,7 @@ router.get("/:id", async (req: Request, res: Response) => {
   res.status(200).send(game);
 });
 
-router.post("/", async (req: Request, res: Response) => {
+router.post("/", verifyToken, async (req: Request, res: Response) => {
   if (!req.body || !req.body.userId || !req.body.stake) {
     res.status(400).send({ message: "User ID and stake are required" });
   }
@@ -39,7 +41,7 @@ router.post("/", async (req: Request, res: Response) => {
     return;
   }
 
-  const game = new Game(userId, stake);
+  const game: INewGame = { userId, stake };
   const created = await db.createGame(userId, game);
   if (!created) {
     res.status(400).send({ message: "Game not created" });
@@ -48,7 +50,7 @@ router.post("/", async (req: Request, res: Response) => {
   res.status(200).send(created);
 });
 
-router.delete("/:id", async (req: Request, res: Response) => {
+router.delete("/:id", verifyToken, async (req: Request, res: Response) => {
   const { id } = req.params;
   const foundGame = await db.getGame(id);
   if (!foundGame) {
@@ -68,4 +70,11 @@ router.delete("/:id", async (req: Request, res: Response) => {
   }
   res.status(200).send({ message: "Game deleted" });
 });
+
+router.post(
+  "/:id/solve",
+  verifyToken,
+  async (req: Request, res: Response) => {},
+);
+
 export default router;

@@ -2,3 +2,5 @@ node_modules
 .husky
 .vscode
 .env
+key
+cert

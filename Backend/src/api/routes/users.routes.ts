@@ -1,39 +1,56 @@
 import express, { Request, Response, Router } from "express";
-import { isUnique } from "../../utils";
 import { db } from "..";
+import verifyToken from "../middlewares/authMiddleware";
 
 const router: Router = express.Router();
 
-router.get("/", async (req: Request, res: Response) => {
+router.get("/", verifyToken, async (req: Request, res: Response) => {
   const { name } = req.query;
   if (!name) {
     const users = await db.getUsers();
     res.status(200).send(users);
     return;
   }
+
   const users = await db.getUsersByNameRegex(name);
   res.status(200).send(users);
 });
 
-
-
-router.get("/:id", async (req: Request, res: Response) => {
-  const { id } = req.params;
-  if (!id) {
+router.get("/:userId", verifyToken, async (req: Request, res: Response) => {
+  const { userId } = req.params;
+  if (!userId) {
     res.status(400).send({ message: "User not found" });
     return;
   }
-  const user = await db.getUser(id);
+  const user = await db.getUser(userId);
   if (!user) {
     res.status(400).send({ message: "User not found" });
     return;
   }
   res.status(200).send(user);
 });
+router.get(
+  "/:userId/balance",
+  verifyToken,
+  async (req: Request, res: Response) => {
+    const { userId } = req.params;
+    if (!userId) {
+      res.status(400).send({ message: "User not found" });
+      return;
+    }
+    const user = await db.getUser(userId);
+    if (!user) {
+      res.status(400).send({ message: "User not found" });
+      return;
+    }
+    const { balance } = user;
+    res.status(200).send({ balance });
+  },
+);
 
-router.patch("/:id", async (req: Request, res: Response) => {
-  const { id } = req.params;
-  if (!id) {
+router.patch("/:userId", verifyToken, async (req: Request, res: Response) => {
+  const { userId } = req.params;
+  if (!userId) {
     res.status(400).send({ message: "User not found" });
     return;
   }
@@ -42,7 +59,7 @@ router.patch("/:id", async (req: Request, res: Response) => {
     res.status(400).send({ message: "No data to change provided" });
     return;
   }
-  const oldUser = await db.getUser(id);
+  const oldUser = await db.getUser(userId);
   if (!oldUser) {
     res.status(400).send({ message: "User not found" });
     return;
@@ -53,7 +70,7 @@ router.patch("/:id", async (req: Request, res: Response) => {
     password: password || oldUser.password,
   };
 
-  const updated = await db.updateUser(id, { id, ...newUser });
+  const updated = await db.updateUser(userId, { userId, ...newUser });
   if (!updated) {
     res.status(400).send({ message: "User not found" });
     return;
@@ -62,18 +79,18 @@ router.patch("/:id", async (req: Request, res: Response) => {
   return;
 });
 
-router.delete("/:id", async (req: Request, res: Response) => {
-  const { id } = req.params;
-  if (!id) {
+router.delete("/:userId", verifyToken, async (req: Request, res: Response) => {
+  const { userId } = req.params;
+  if (!userId) {
     res.status(400).send({ message: "User not found" });
     return;
   }
-  const deleted = await db.deleteUser(id);
+  const deleted = await db.deleteUser(userId);
   if (!deleted) {
     res.status(400).send({ message: "User not found" });
     return;
   }
-  const deletedGames = await db.deleteGamesByUserId(id);
+  const deletedGames = await db.deleteGamesByUserId(userId);
 
   res.status(200).send({
     message: "deleted",

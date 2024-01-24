@@ -1,10 +1,10 @@
 export interface IUser {
   _id?: string;
-  id: string;
+  userId: string;
   name: string;
   balance: number;
   // email: string;
-  password: string;
+  password?: string;
 }
 
 export interface IGame {
@@ -13,14 +13,12 @@ export interface IGame {
   userId: string;
   stake: number;
   date: Date;
-  won: boolean;
+  status: string;
   // numbers: number[];
 }
-
-export interface IHash {
-  hash: string;
-  createdAt: Date;
-  saltRounds: number;
+export interface INewGame {
+  userId: string;
+  stake: number;
 }
 
 export interface Envs {

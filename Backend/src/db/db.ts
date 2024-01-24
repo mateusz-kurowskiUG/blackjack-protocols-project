@@ -1,17 +1,16 @@
 "yse strict";
-import { Envs, IGame, IHash, IUser } from "../interfaces/interfaces";
+import { Envs, IGame, INewGame, IUser } from "../interfaces/interfaces";
 import mongoose from "mongoose";
 import { getEnvs } from "../utils";
-import { Game, User, Hash } from "./schemas/schemas";
+import { Game, User } from "./schemas/schemas";
 import bcrypt from "bcrypt";
 import { v4 as uuidv4 } from "uuid";
 
 export class Db {
   envs: Envs;
   connection: mongoose.Connection;
-  User: mongoose.Model<UserInterface>;
-  Game: mongoose.Model<GameInterface>;
-  Hash: mongoose.Model<Hash>;
+  User: mongoose.Model<IUser>;
+  Game: mongoose.Model<IGame>;
   constructor() {
     this.envs = getEnvs();
     this.setUp();
@@ -22,47 +21,32 @@ export class Db {
     this.connection.useDb(this.envs.DB);
     this.Game = this.connection.model<IGame>("Game", Game);
     this.User = this.connection.model<IUser>("User", User);
-    this.Hash = this.connection.model<IHash>("Hash", Hash);
     Promise.all([
       await this.deleteAllGames(),
       await this.deleteAllUsers(),
       await this.insertTestData(),
-      // await this.createHash(),
     ]).then(() => {
       console.log("DB ready!");
     });
   }
 
-  // async createHash(): Promise<boolean> {
-  //   this.connection.model("Hash", Hash);
-  //   const hash = await this.Hash.findOne();
-  //   if (hash) return true;
-  //   bcrypt.hash("s0//P4$$w0rD", 10, async (err, hash: string) => {
-  //     if (err) throw err;
-  //     const hashCreated = await this.Hash.create({
-  //       hash: hash,
-  //       createdAt: new Date(),
-  //     });
-  //     return hashCreated ? true : false;
-  //   });
-  //   return true;
-  // }
-
-  async authenticateUser(name, password): Promise<boolean> {
+  async authenticateUser(name, password): Promise<IUser | boolean> {
     const user = await this.User.findOne({ name });
     if (!user) return false;
-    const match = await bcrypt.compare(password, user.password);
-    return match;
+    const match = await bcrypt.compare(password, user.password!);
+    if (!match) return false;
+    const { password: _, _id, __v, ...newUser } = user.toObject();
+    return newUser;
   }
 
   async insertTestData() {
     const testUsers: IUser[] = [
-      { id: "1", name: "test", balance: 100, password: "test" },
-      { id: "2", name: "test2", balance: 100, password: "test2" },
+      { userId: "1", name: "test", balance: 100, password: "test" },
+      { userId: "2", name: "test2", balance: 100, password: "test2" },
     ];
     const testGames: IGame[] = [
-      { id: "1", userId: "1", stake: 10, date: new Date(), won: true },
-      { id: "2", userId: "2", stake: 10, date: new Date(), won: false },
+      { id: "1", userId: "1", stake: 10, date: new Date(), status: "created" },
+      { id: "2", userId: "2", stake: 10, date: new Date(), status: "created" },
     ];
     await this.User.insertMany(testUsers);
     await this.Game.insertMany(testGames);
@@ -93,16 +77,19 @@ export class Db {
       balance: 100,
     });
     const created = await this.User.create(newUser);
-    return created;
+    const { password: _, _id, __v, ...user } = created.toObject();
+    return user;
   }
   async deleteUser(id: string) {
     const user = this.User.findOneAndDelete({ id: id });
     return user;
   }
-  async getUser(id: string): Promise<IUser> {
-    const user = await this.User.findOne({ id: id });
-    if (user) delete user.password;
-    return user;
+  async getUser(id: string): Promise<IUser | null> {
+    const user = await this.User.findOne({ userId: id });
+    if (!user) return null;
+    const { password, ...newUser } = user.toObject();
+
+    return newUser;
   }
   async getUsers(): Promise<IUser[]> {
     const users = await this.User.find({});
@@ -117,27 +104,29 @@ export class Db {
     return users;
   }
 
-  async updateUser(id: string, params: IUser): Promise<IUser> {
-    const x = await this.connection
-      .model("User")
-      .findOneAndUpdate({ id: id }, params, { new: true });
-    return x;
+  async updateUser(userId: string, params: IUser): Promise<IUser | null> {
+    const foundUser = this.User.findOne({ userId: userId });
+    if (!foundUser) return null;
   }
 
-  async createGame(userId: string, game: IGame) {
-    const session = await this.connection.startSession();
-    const transaction = await session.withTransaction(async () => {
-      await this.Game.create(game);
-      const result = await this.connection
-        .model("User")
-        .findOneAndUpdate(
-          { id: userId },
-          { $inc: { balance: -game.stake } },
-          { new: true },
-        );
-      return result;
+  async createGame(userId: string, game: INewGame): Promise<IGame | null> {
+    const user = await this.User.findOne({ userId: userId });
+    if (!user) return null;
+    if (game.stake > user.balance || game.stake < 1) return null;
+    const newGame = await this.Game.create({
+      id: uuidv4(),
+      userId: userId,
+      stake: game.stake,
+      date: new Date(),
+      status: "created",
     });
-    return transaction;
+    const updateUserBalance = await this.User.findOneAndUpdate(
+      { userId: userId },
+      { balance: $dec(game.stake) },
+    );
+    const created = await this.Game.create(newGame);
+    const { _id, __v, ...createdGame } = created.toObject();
+    return createdGame;
   }
   async getGame(id: string): Promise<IGame> {
     const game = await this.Game.findOne({ id: id });
