@@ -1,22 +1,21 @@
-from requests import Session
+from session import session
 import getpass
 
 
 def login(name, password):
-    session = Session()
     response = session.post(
         f"https://localhost:3000/auth/login",
         json={"name": name, "password": password},
         verify=False,
     )
     if response.status_code == 200:
+        print(session.cookies.get("token"))
         return response.json()
     else:
         return None
 
 
 def register(name, password):
-    session = Session()
     response = session.post(
         f"https://localhost:3000/auth/register",
         json={"name": name, "password": password},

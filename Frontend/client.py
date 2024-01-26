@@ -8,7 +8,6 @@ data = {}
 
 
 def main():
-    token = None
     while True:
         if token is None:
             auth_result = auth_menu()

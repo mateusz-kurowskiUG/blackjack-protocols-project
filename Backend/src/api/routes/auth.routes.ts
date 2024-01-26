@@ -20,9 +20,10 @@ router.post("/login", async (req: Request, res: Response) => {
     res.status(400).send({ loggedIn: false, message: "User not found" });
     return;
   }
-
   const token = genToken(name);
-  res.status(200).send({ loggedIn: true, token: token, user });
+  res.cookie("token", token, { httpOnly: true });
+  res.status(200).send({ loggedIn: true });
+  // res.status(200).send({ loggedIn: true, token: token, user });
   return;
 });
 
