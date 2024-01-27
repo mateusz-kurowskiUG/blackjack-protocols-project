@@ -6,7 +6,7 @@ export interface IUser {
   // email: string;
   password?: string;
 }
-
+type TCard = string | number;
 export interface IGame {
   _id?: string;
   id: string;
@@ -14,8 +14,8 @@ export interface IGame {
   stake: number;
   date: Date;
   status: string;
-  player_cards: string[];
-  dealer_cards: string[];
+  playerCards: TCard[];
+  dealerCards: TCard[];
 }
 export interface INewGame {
   userId: string;

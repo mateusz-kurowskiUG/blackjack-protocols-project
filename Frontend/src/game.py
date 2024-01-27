@@ -1,5 +1,6 @@
 from src.session import session
 from src.mqtt import mqtt_client, subscribe_to_game
+from src.actions import action_menu
 
 
 def game_menu():
@@ -23,4 +24,11 @@ def game_menu():
     game = response.json()
     subscribe_to_game(game["id"])
     while game["status"] != "completed":
-        pass
+        game = session.get(
+            f"https://localhost:3000/games/{game['id']}",
+            headers={"Authorization": session.cookies.get("token")},
+            verify=False,
+        ).json()
+        print(f"Dealer's cards: {game['dealerCards']}")
+        print(f"Your cards: {game['playerCards']}")
+        game = action_menu(game)

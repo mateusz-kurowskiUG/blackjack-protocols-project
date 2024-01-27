@@ -25,6 +25,14 @@ export const Game = new Schema<IGame>({
     type: String,
     required: true,
   },
+  playerCards: {
+    type: Array,
+    required: true,
+  },
+  dealerCards: {
+    type: Array,
+    required: true,
+  },
 });
 
 export const User = new Schema<IUser>({

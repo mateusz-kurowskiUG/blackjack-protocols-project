@@ -1,6 +1,7 @@
 import express, { Request, Response, Router } from "express";
 import { db } from "..";
 import verifyToken from "../middlewares/authMiddleware";
+import mqttClient from "../../mqtt";
 const router: Router = express.Router();
 router.get("/", verifyToken, async (req: Request, res: Response) => {
   const games = await db.getGames();
@@ -110,7 +111,7 @@ const findWinner = (playerScore, dealerScore) => {
   return "draw"; // Pozostałe przypadki remisu
 };
 router.post(
-  "/:gameId/solve",
+  "/solve/:gameId",
   verifyToken,
   async (req: Request, res: Response) => {
     const userId = res.locals["userId"];
@@ -137,35 +138,108 @@ router.post(
       res.status(400).send({ message: "User not found" });
       return;
     }
-    const { player_cards, dealer_cards } = foundGame;
-
-    const playerScore = calcPoints(player_cards);
-    const dealerScore = calcPoints(dealer_cards);
+    const { playerCards, dealerCards } = foundGame;
+    const playerScore = calcPoints(playerCards);
+    const dealerScore = calcPoints(dealerCards);
     const result = findWinner(playerScore, dealerScore);
-    if (result === "player") {
-      const wonAmount = foundGame.stake * 2;
-      const updateUserBalance = await db.updateUser(userId, {
-        balance: foundUser.balance + wonAmount,
-      });
-    } else if (result === "draw") {
-      const wonAmount = foundGame.stake;
-    } else {
-      const wonAmount = 0;
+    const wonAmount =
+      result === "player"
+        ? foundGame.stake * 2
+        : result === "dealer"
+          ? foundGame.stake
+          : 0;
+    const newStatus =
+      result === "player" ? won : result === "dealer" ? lost : draw;
+
+    const message =
+      result === "player"
+        ? "You won"
+        : result === "dealer"
+          ? "You lost"
+          : "Draw";
+
+    const updateUserBalance = await db.endGame(gameId, wonAmount, newStatus);
+    if (!updateUserBalance) {
+      res.status(400).send({ message: "Game not found" });
+      return;
     }
-    foundGame.status = "solved";
+    mqttClient.publish(`game/${gameId}`, message);
+    if (result === "player" || result === "draw") {
+      mqttClient.publish(`game/${gameId}`, `YOU WON ${wonAmount}`);
+    }
+    res.status(200).send({ message: "Game Completed" });
+    return;
   },
 );
 
-router.post(
-  ":gameId/stand",
+router.patch(
+  "stand/:gameId",
   verifyToken,
-  async (req: Request, res: Response) => {},
+  async (req: Request, res: Response) => {
+    const userId = res.locals["userId"];
+    const { gameId } = req.params;
+    if (!gameId || !userId) {
+      res.status(400).send({ message: "Game not found" });
+      return;
+    }
+    const foundGame = await db.getGame(gameId);
+    if (!foundGame) {
+      res.status(400).send({ message: "Game not found" });
+      return;
+    }
+    if (foundGame.userId !== userId) {
+      res.status(400).send({ message: "Game not found" });
+      return;
+    }
+    while (calcPoints(foundGame.dealerCards) < 17) {
+      foundGame.dealerCards.push(db.randomCard());
+    }
+    const updatedGame = await db.updateGame(gameId, {
+      dealerCards: foundGame.dealerCards,
+    });
+    if (!updatedGame) {
+      res.status(400).send({ message: "Game not found" });
+      return;
+    }
+    res.status(200).send(updatedGame);
+    return;
+  },
 );
 
-router.post(
-  ":gameId/hit",
+router.patch(
+  "/hit/:gameId",
   verifyToken,
-  async (req: Request, res: Response) => {},
+  async (req: Request, res: Response) => {
+    const userId = res.locals["userId"];
+    const { gameId } = req.params;
+    if (!gameId || !userId) {
+      res.status(400).send({ message: "Game not found" });
+      return;
+    }
+    const foundGame = await db.getGame(gameId);
+    if (
+      !foundGame ||
+      foundGame.userId !== userId ||
+      foundGame.status !== "created"
+    ) {
+      res.status(400).send({ message: "Game not found" });
+      return;
+    }
+    const newCard = db.randomCard();
+    mqttClient.publish(
+      `game/${gameId}`,
+      `------------You got ${newCard}--------`,
+    );
+    const updatedGame = await db.updateGame(gameId, {
+      playerCards: [...foundGame.playerCards, newCard],
+    });
+    if (!updatedGame) {
+      res.status(400).send({ message: "Game not found" });
+      return;
+    }
+    res.status(200).send(updatedGame);
+    return;
+  },
 );
 
 export default router;

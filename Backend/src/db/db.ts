@@ -1,5 +1,5 @@
 "yse strict";
-import { Envs, IGame, INewGame, IUser } from "../interfaces/interfaces";
+import { Envs, IGame, IUser } from "../interfaces/interfaces";
 import mongoose from "mongoose";
 import { getEnvs } from "../utils";
 import { Game, User } from "./schemas/schemas";
@@ -24,7 +24,6 @@ export class Db {
     Promise.all([
       await this.deleteAllGames(),
       await this.deleteAllUsers(),
-      await this.insertTestData(),
     ]).then(() => {
       console.log("DB ready!");
     });
@@ -37,19 +36,6 @@ export class Db {
     if (!match) return false;
     const { password: _, _id, __v, password, ...newUser } = user.toObject();
     return newUser;
-  }
-
-  async insertTestData() {
-    const testUsers: IUser[] = [
-      { userId: "1", name: "test", balance: 100, password: "test" },
-      { userId: "2", name: "test2", balance: 100, password: "test2" },
-    ];
-    const testGames: IGame[] = [
-      { id: "1", userId: "1", stake: 10, date: new Date(), status: "created" },
-      { id: "2", userId: "2", stake: 10, date: new Date(), status: "created" },
-    ];
-    await this.User.insertMany(testUsers);
-    await this.Game.insertMany(testGames);
   }
 
   async deleteAllGames() {
@@ -142,8 +128,8 @@ export class Db {
       stake,
       date: new Date(),
       status: "created",
-      dealer_cards: [this.randomCard()],
-      player_cards: [this.randomCard(), this.randomCard()],
+      dealerCards: [this.randomCard()],
+      playerCards: [this.randomCard(), this.randomCard()],
     });
     const updateUserBalance = await this.User.findOneAndUpdate(
       { userId: userId },
@@ -164,7 +150,30 @@ export class Db {
   }
 
   async updateGame(id: string, params: object): Promise<IGame> {
-    const updatedGame = await this.Game.findOneAndUpdate() 
+    const updatedGame = await this.Game.findOneAndUpdate({ id: id }, params);
+    if (!updatedGame) return null;
+    const { _id, __v, ...newGame } = updatedGame.toObject();
+    console.log(newGame);
+
+    return newGame;
+  }
+
+  async endGame(
+    gameId: string,
+    userWinnings: number,
+    status: string,
+  ): Promise<boolean> {
+    const game = await this.Game.findOneAndUpdate(
+      { id: gameId, userId: userId },
+      { status: status },
+    );
+    if (!game) return false;
+    const updateUserBalance = await this.User.findOneAndUpdate(
+      { userId: game.userId },
+      { $inc: { balance: userWinnings } },
+    );
+    if (!updateUserBalance) return false;
+    return true;
   }
 
   async deleteGame(id: string) {

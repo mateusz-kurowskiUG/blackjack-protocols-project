@@ -12,6 +12,7 @@ logowanie
 
 MQTT:
 czat publiczny
+prezentacja wyników
 
 Inne:
 baza danych
