@@ -7,7 +7,6 @@ def hit(game_id):
         headers={"Authorization": session.cookies.get("token")},
         verify=False,
     )
-    print(response.status_code)
     if response.status_code == 200:
         return response.json()
     else:
@@ -21,8 +20,13 @@ def stand(game_id):
         headers={"Authorization": session.cookies.get("token")},
         verify=False,
     )
+
+    print(response)
     if response.status_code == 200:
+        # solve!!!!!!!!!!!!
+
         return response.json()
+
     else:
         print("error")
         return

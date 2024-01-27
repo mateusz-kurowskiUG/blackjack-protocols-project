@@ -173,7 +173,7 @@ router.post(
 );
 
 router.patch(
-  "stand/:gameId",
+  "/stand/:gameId",
   verifyToken,
   async (req: Request, res: Response) => {
     const userId = res.locals["userId"];
@@ -183,19 +183,24 @@ router.patch(
       return;
     }
     const foundGame = await db.getGame(gameId);
-    if (!foundGame) {
+    if (
+      !foundGame ||
+      foundGame.status !== "created" ||
+      foundGame.userId !== userId
+    ) {
       res.status(400).send({ message: "Game not found" });
       return;
     }
-    if (foundGame.userId !== userId) {
-      res.status(400).send({ message: "Game not found" });
-      return;
+    const newCards = [];
+    let score = calcPoints(foundGame.dealerCards);
+    while (score < 17) {
+      const newCard = db.randomCard();
+      newCards.push(newCard);
+      score = calcPoints([...foundGame.dealerCards, ...newCards]);
     }
-    while (calcPoints(foundGame.dealerCards) < 17) {
-      foundGame.dealerCards.push(db.randomCard());
-    }
+
     const updatedGame = await db.updateGame(gameId, {
-      dealerCards: foundGame.dealerCards,
+      dealerCards: [...foundGame.dealerCards, ...newCards],
     });
     if (!updatedGame) {
       res.status(400).send({ message: "Game not found" });
