@@ -1,7 +1,8 @@
 from requests import post
 from src.session import session
-
-
+from src.mqtt import mqtt_client,connect_to_public_chat,disconnect_from_public_chat,send_message_to_public_chat,print_message
+from src.public_chat import public_chat_menu
+from src.game import game_menu
 def create_game(user):
     stake = -1
     while stake < 1 and stake > user["balance"]:
@@ -152,6 +153,12 @@ def games_history():
         print("Games history get failed")
         return None
 
+def enter_all_chat():
+    public_chat_menu()
+
+def leave_all_chat():
+    disconnect_from_public_chat()
+
 def logged_menu():
     print(
         "1. Create a game",
@@ -168,7 +175,7 @@ def logged_menu():
     )
     choice = input("Enter choice: ")
     if choice == "1":
-        create_game()
+        game_menu()
     elif choice == "2":
         users = get_users()
         if users is None:
@@ -198,13 +205,15 @@ def logged_menu():
         print(result)
     elif choice == "8":
         history = games_history()
-        if history is None:
+        if history is None or len(history) == 0:
             print("No games")
         else:
             for game in history:
                 print(game)
     elif choice == "9":
         print("Enter public chat")
+        enter_all_chat()
+        
     elif choice == "10":
         if logout():
             return True

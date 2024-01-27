@@ -7,6 +7,7 @@ import gamesRoutes from "./routes/games.routes";
 import usersRoutes from "./routes/users.routes";
 import authRoutes from "./routes/auth.routes";
 import { Db } from "../db/db";
+import mqttClient from "../mqtt";
 
 const privateKey = fs.readFileSync("./key", "utf8");
 const certificate = fs.readFileSync("./cert", "utf8");
@@ -33,11 +34,25 @@ app.get("/", (req: Request, res: Response) => {
   res.send("Got a GET request");
 });
 
+const messages = [];
+
 httpsServer.listen(port, () => {
   console.log(`Example app listening on port ${port}`);
   setTimeout(() => {
     db.createUser({ name: "aaa", password: "aaa" }).then((res) => {
       console.log("created");
     });
+    db.createUser({ name: "bbb", password: "bbb" }).then((res) => {
+      console.log("created");
+    });
   }, 1000);
+
+  mqttClient.subscribe("public");
+  mqttClient.on("message", (topic, message) => {
+    if (topic === "public") {
+      const msg = message.toString().split(":");
+      messages.push({ sender: msg[0], msgContent: msg[1] });
+      console.log(msg);
+    }
+  });
 });

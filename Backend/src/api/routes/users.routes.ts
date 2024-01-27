@@ -58,15 +58,12 @@ router.get(
   },
 );
 router.get(
-  "/user/games/:userId",
+  "/user/games/:userIdParam",
   verifyToken,
   async (req: Request, res: Response) => {
-    console.log(1);
-
-    const { userId } = req.params;
-    console.log(2);
-
-    if (!userId) {
+    const userId = res.locals["userId"];
+    const { userIdParam } = req.params;
+    if (!userId || !userIdParam || userIdParam !== userId) {
       res.status(400).send({ message: "User not found" });
       return;
     }
@@ -77,39 +74,45 @@ router.get(
     }
     const games = await db.getGamesByUserId(userId);
     res.status(200).send(games);
+    return;
   },
 );
 
-router.patch("/:userId", verifyToken, async (req: Request, res: Response) => {
-  const { userId } = req.params;
-  if (!userId) {
-    res.status(400).send({ message: "User not found" });
-    return;
-  }
-  const { name, balance, password } = req.body;
-  if (!name && !balance && !password) {
-    res.status(400).send({ message: "No data to change provided" });
-    return;
-  }
-  const oldUser = await db.getUser(userId);
-  if (!oldUser) {
-    res.status(400).send({ message: "User not found" });
-    return;
-  }
-  const newUser = {
-    name: name || oldUser.name,
-    balance: balance || oldUser.balance,
-    password: password || oldUser.password,
-  };
+router.patch(
+  "/:userIdParam",
+  verifyToken,
+  async (req: Request, res: Response) => {
+    const userId = res.locals["userId"];
+    const { userIdParam } = req.params;
+    if (!userId || !userIdParam || userIdParam !== userId) {
+      res.status(400).send({ message: "User not found" });
+      return;
+    }
+    const { name, balance, password } = req.body;
+    if (!name && !balance && !password) {
+      res.status(400).send({ message: "No data to change provided" });
+      return;
+    }
+    const oldUser = await db.getUser(userId);
+    if (!oldUser) {
+      res.status(400).send({ message: "User not found" });
+      return;
+    }
+    const newUser = {
+      name: name || oldUser.name,
+      balance: balance || oldUser.balance,
+      password: password || oldUser.password,
+    };
 
-  const updated = await db.updateUser(userId, { userId, ...newUser });
-  if (!updated) {
-    res.status(400).send({ message: "User not found" });
+    const updated = await db.updateUser(userId, { userId, ...newUser });
+    if (!updated) {
+      res.status(400).send({ message: "User not found" });
+      return;
+    }
+    res.status(200).send({ message: "updated", user: updated });
     return;
-  }
-  res.status(200).send({ message: "updated", user: updated });
-  return;
-});
+  },
+);
 
 router.delete(
   "/:userIdParam",

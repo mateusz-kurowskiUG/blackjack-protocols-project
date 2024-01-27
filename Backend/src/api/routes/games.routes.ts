@@ -19,10 +19,13 @@ router.get("/:id", verifyToken, async (req: Request, res: Response) => {
 });
 
 router.post("/", verifyToken, async (req: Request, res: Response) => {
-  if (!req.body || !req.body.userId || !req.body.stake) {
-    res.status(400).send({ message: "User ID and stake are required" });
+  const userId = res.locals["userId"];
+
+  if (!req.body || !req.body.stake) {
+    res.status(400).send({ message: "Stake is required" });
+    return;
   }
-  const { userId, stake } = req.body;
+  const { stake } = req.body;
   const foundUser = await db.getUser(userId);
   if (!foundUser) {
     res.status(400).send({ message: "User not found" });
@@ -41,13 +44,13 @@ router.post("/", verifyToken, async (req: Request, res: Response) => {
     return;
   }
 
-  const game: INewGame = { userId, stake };
-  const created = await db.createGame(userId, game);
+  const created = await db.createGame(userId, stake);
   if (!created) {
     res.status(400).send({ message: "Game not created" });
     return;
   }
   res.status(200).send(created);
+  return;
 });
 
 router.delete("/:id", verifyToken, async (req: Request, res: Response) => {
@@ -62,7 +65,7 @@ router.delete("/:id", verifyToken, async (req: Request, res: Response) => {
     res.status(400).send({ message: "User not found" });
     return;
   }
-  if (foundGame.won) foundUser.balance += foundGame.stake;
+  if (foundGame.status) foundUser.balance += foundGame.stake;
   const deleted = await db.deleteGame(id);
   if (!deleted.deletedCount) {
     res.status(400).send({ message: "Game not found" });

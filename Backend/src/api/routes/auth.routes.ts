@@ -39,6 +39,7 @@ router.post("/login", async (req: Request, res: Response) => {
 
   res.cookie("token", token, { httpOnly: true });
   res.cookie("userId", user.userId, { httpOnly: true });
+  res.cookie("username", user.name, { httpOnly: true });
   res.status(200).send({ loggedIn: true });
   // res.status(200).send({ loggedIn: true, token: token, user });
   return;
@@ -67,6 +68,8 @@ router.post("/register", async (req: Request, res: Response) => {
 
 router.post("/logout", async (req: Request, res: Response) => {
   res.clearCookie("token");
+  res.clearCookie("userId");
+  res.clearCookie("username");
   res.status(200).send({ message: "Logged out" });
   return;
 });

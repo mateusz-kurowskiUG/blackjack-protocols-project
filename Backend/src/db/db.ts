@@ -89,7 +89,11 @@ export class Db {
     const user = await this.User.findOne({ userId: userId });
     if (!user) return [];
     const games = await this.Game.find({ userId: userId });
-    return games;
+    const resultGames = games.map((game) => {
+      const { _id, __v, ...newGame } = game.toObject();
+      return newGame;
+    });
+    return resultGames;
   }
 
   async getUser(id: string): Promise<IUser | null> {
@@ -113,11 +117,16 @@ export class Db {
   }
 
   async updateUser(userId: string, params: IUser): Promise<IUser | null> {
-    const foundUser = this.User.findOne({ userId: userId });
-    if (!foundUser) return null;
+    if (params["password"]) {
+      params["password"] = await bcrypt.hash(params["password"], 10);
+    }
+    const user = await this.User.findOneAndUpdate({ userId: userId }, params);
+    if (!user) return null;
+    const { password, _id, __v, ...newUser } = user.toObject();
+    return newUser;
   }
 
-  async createGame(userId: string, game: INewGame): Promise<IGame | null> {
+  async createGame(userId: string, stake: number): Promise<IGame | null> {
     const user = await this.User.findOne({ userId: userId });
     if (!user) return null;
     if (game.stake > user.balance || game.stake < 1) return null;

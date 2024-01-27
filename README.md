@@ -1,2 +1,3 @@
 Protokoły sieci Web
 Mateusz Kurowski
+docker run --name hivemq-ce -d -p 1883:1883 hivemq/hivemq-ce
