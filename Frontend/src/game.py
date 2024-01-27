@@ -1,4 +1,5 @@
 from src.session import session
+from src.mqtt import mqtt_client, subscribe_to_game
 
 
 def game_menu():
@@ -10,9 +11,16 @@ def game_menu():
     print(f"Your balance: {balance['balance']}")
     stake = int(input("Enter stake: "))
 
-    game = session.post(
+    response = session.post(
         "https://localhost:3000/games",
-        auth=(session.cookies.get("token"), ""),
+        headers={"Authorization": session.cookies.get("token")},
         json={"stake": stake},
         verify=False,
     )
+    if response.status_code != 200:
+        print("Game creation failed")
+        return None
+    game = response.json()
+    subscribe_to_game(game["id"])
+    while game["status"] != "completed":
+        pass

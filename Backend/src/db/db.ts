@@ -126,21 +126,30 @@ export class Db {
     return newUser;
   }
 
+  randomCard(): string | number {
+    const values = [2, 3, 4, 5, 6, 7, 8, 9, 10, "A", "J", "Q", "K"];
+    const randomIndex = Math.floor(Math.random() * values.length);
+    return values[randomIndex];
+  }
+
   async createGame(userId: string, stake: number): Promise<IGame | null> {
     const user = await this.User.findOne({ userId: userId });
     if (!user) return null;
-    if (game.stake > user.balance || game.stake < 1) return null;
+    if (stake > user.balance || stake < 1) return null;
     const newGame = await this.Game.create({
       id: uuidv4(),
       userId: userId,
-      stake: game.stake,
+      stake,
       date: new Date(),
       status: "created",
+      dealer_cards: [this.randomCard()],
+      player_cards: [this.randomCard(), this.randomCard()],
     });
     const updateUserBalance = await this.User.findOneAndUpdate(
       { userId: userId },
-      { balance: $dec(game.stake) },
+      { $inc: { balance: -stake } },
     );
+    if (!updateUserBalance) return null;
     const created = await this.Game.create(newGame);
     const { _id, __v, ...createdGame } = created.toObject();
     return createdGame;
@@ -154,7 +163,9 @@ export class Db {
     return games;
   }
 
-  updateGame(id: string, params: object): Promise<IGame> {}
+  async updateGame(id: string, params: object): Promise<IGame> {
+    const updatedGame = await this.Game.findOneAndUpdate() 
+  }
 
   async deleteGame(id: string) {
     const game = await this.Game.deleteOne({ id: id });

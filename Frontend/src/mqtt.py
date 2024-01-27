@@ -1,5 +1,6 @@
 import paho.mqtt.client as mqtt
 from src.session import session
+import certifi
 
 mqtt_client = mqtt.Client()
 mqtt_client.connect("localhost", 1883, 60)
@@ -37,3 +38,8 @@ def send_message_to_public_chat(message):
 def disconnect_from_public_chat():
     mqtt_client.publish("public", f"{session.cookies.get('username')}:Left the chat")
     mqtt_client.unsubscribe("public")
+
+
+def subscribe_to_game(gameId):
+    mqtt_client.subscribe(f"game/{gameId}")
+    mqtt_client.loop_start()

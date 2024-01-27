@@ -14,7 +14,8 @@ export interface IGame {
   stake: number;
   date: Date;
   status: string;
-  // numbers: number[];
+  player_cards: string[];
+  dealer_cards: string[];
 }
 export interface INewGame {
   userId: string;
