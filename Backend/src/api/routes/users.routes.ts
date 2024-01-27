@@ -16,24 +16,56 @@ router.get("/", verifyToken, async (req: Request, res: Response) => {
   res.status(200).send(users);
 });
 
-router.get("/:userId", verifyToken, async (req: Request, res: Response) => {
-  const { userId } = req.params;
-  if (!userId) {
-    res.status(400).send({ message: "User not found" });
-    return;
-  }
-  const user = await db.getUser(userId);
-  if (!user) {
-    res.status(400).send({ message: "User not found" });
-    return;
-  }
-  res.status(200).send(user);
-});
 router.get(
-  "/:userId/balance",
+  "/balance/:userIdParam",
   verifyToken,
   async (req: Request, res: Response) => {
+    const userId = res.locals["userId"];
+    const { userIdParam } = req.params;
+    if ((!userIdParam || !userId) && userIdParam !== userId) {
+      res.status(400).send({ message: "User not found" });
+      return;
+    }
+
+    const user = await db.getUser(userId);
+    if (!user) {
+      res.status(400).send({ message: "User not found" });
+      return;
+    }
+    const { balance } = user;
+    res.status(200).send({ message: "user balance", balance });
+    return;
+  },
+);
+
+router.get(
+  "/data/:userIdParam",
+  verifyToken,
+  async (req: Request, res: Response) => {
+    const userId = res.locals["userId"];
+    const { userIdParam } = req.params;
+    if (!userIdParam || !userId || userIdParam !== userId) {
+      res.status(400).send({ message: "User not found" });
+      return;
+    }
+
+    const user = await db.getUser(userId);
+    if (!user) {
+      res.status(400).send({ message: "User not found" });
+      return;
+    }
+    res.status(200).send(user);
+  },
+);
+router.get(
+  "/user/games/:userId",
+  verifyToken,
+  async (req: Request, res: Response) => {
+    console.log(1);
+
     const { userId } = req.params;
+    console.log(2);
+
     if (!userId) {
       res.status(400).send({ message: "User not found" });
       return;
@@ -43,8 +75,8 @@ router.get(
       res.status(400).send({ message: "User not found" });
       return;
     }
-    const { balance } = user;
-    res.status(200).send({ balance });
+    const games = await db.getGamesByUserId(userId);
+    res.status(200).send(games);
   },
 );
 
@@ -79,25 +111,30 @@ router.patch("/:userId", verifyToken, async (req: Request, res: Response) => {
   return;
 });
 
-router.delete("/:userId", verifyToken, async (req: Request, res: Response) => {
-  const { userId } = req.params;
-  if (!userId) {
-    res.status(400).send({ message: "User not found" });
-    return;
-  }
-  const deleted = await db.deleteUser(userId);
-  if (!deleted) {
-    res.status(400).send({ message: "User not found" });
-    return;
-  }
-  const deletedGames = await db.deleteGamesByUserId(userId);
+router.delete(
+  "/:userIdParam",
+  verifyToken,
+  async (req: Request, res: Response) => {
+    const userId = res.locals["userId"];
+    const { userIdParam } = req.params;
+    if (!userIdParam || !userId || userIdParam !== userId) {
+      res.status(400).send({ message: "User not found" });
+      return;
+    }
+    const deleted = await db.deleteUser(userIdParam);
+    if (!deleted) {
+      res.status(400).send({ message: "User not found", idiot: userIdParam });
+      return;
+    }
+    const deletedGames = await db.deleteGamesByUserId(userIdParam);
 
-  res.status(200).send({
-    message: "deleted",
-    user: deleted,
-    gamesDeleted: deletedGames.deletedCount,
-  });
-  return;
-});
+    res.status(200).send({
+      message: "deleted",
+      user: deleted,
+      gamesDeleted: deletedGames.deletedCount,
+    });
+    return;
+  },
+);
 
 export default router;

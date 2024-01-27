@@ -1,4 +1,4 @@
-from session import session
+from src.session import session
 import getpass
 
 
@@ -9,7 +9,6 @@ def login(name, password):
         verify=False,
     )
     if response.status_code == 200:
-        print(session.cookies.get("token"))
         return response.json()
     else:
         return None
@@ -38,17 +37,19 @@ def auth_menu():
             result = login(username, password)
             if result is None:
                 print("Login failed")
+                return False
             else:
                 print("Login successful")
-                print(result)
-                return result["token"], result["user"]
+                return True
 
         elif choice == "2":
             result = register(username, password)
             if result is None:
                 print("Registration failed")
+                return False
             else:
                 print("Registration successful")
+                return True
     elif choice == "3":
         exit()
     else:

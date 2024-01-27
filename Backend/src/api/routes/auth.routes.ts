@@ -3,8 +3,16 @@ import { db } from "..";
 import jwt from "jsonwebtoken";
 const router: Router = express.Router();
 
-const genToken = ({ id, name }: { id: string; name: string }) => {
-  return jwt.sign({ id, name }, process.env.TOKEN_SECRET, {
+const genToken = ({
+  userId,
+  name,
+  balance,
+}: {
+  userId: string;
+  name: string;
+  balance: number;
+}) => {
+  return jwt.sign({ userId, name, balance }, process.env.TOKEN_SECRET!, {
     expiresIn: "10h",
   });
 };
@@ -20,8 +28,17 @@ router.post("/login", async (req: Request, res: Response) => {
     res.status(400).send({ loggedIn: false, message: "User not found" });
     return;
   }
-  const token = genToken(name);
+  console.log(user);
+
+  const token = genToken({
+    userId: user.userId,
+    name: user.name,
+    balance: user.balance,
+  });
+  console.log({ token });
+
   res.cookie("token", token, { httpOnly: true });
+  res.cookie("userId", user.userId, { httpOnly: true });
   res.status(200).send({ loggedIn: true });
   // res.status(200).send({ loggedIn: true, token: token, user });
   return;
@@ -45,6 +62,12 @@ router.post("/register", async (req: Request, res: Response) => {
   }
 
   res.status(200).send(response);
+  return;
+});
+
+router.post("/logout", async (req: Request, res: Response) => {
+  res.clearCookie("token");
+  res.status(200).send({ message: "Logged out" });
   return;
 });
 export default router;

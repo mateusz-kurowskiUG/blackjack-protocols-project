@@ -35,4 +35,9 @@ app.get("/", (req: Request, res: Response) => {
 
 httpsServer.listen(port, () => {
   console.log(`Example app listening on port ${port}`);
+  setTimeout(() => {
+    db.createUser({ name: "aaa", password: "aaa" }).then((res) => {
+      console.log("created");
+    });
+  }, 1000);
 });

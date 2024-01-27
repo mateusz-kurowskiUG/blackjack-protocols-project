@@ -30,12 +30,12 @@ export class Db {
     });
   }
 
-  async authenticateUser(name, password): Promise<IUser | boolean> {
+  async authenticateUser(name, userPassword): Promise<IUser | false> {
     const user = await this.User.findOne({ name });
     if (!user) return false;
-    const match = await bcrypt.compare(password, user.password!);
+    const match = await bcrypt.compare(userPassword, user.password!);
     if (!match) return false;
-    const { password: _, _id, __v, ...newUser } = user.toObject();
+    const { password: _, _id, __v, password, ...newUser } = user.toObject();
     return newUser;
   }
 
@@ -81,9 +81,17 @@ export class Db {
     return user;
   }
   async deleteUser(id: string) {
-    const user = this.User.findOneAndDelete({ id: id });
+    const user = this.User.findOneAndDelete({ userId: id });
     return user;
   }
+
+  async getGamesByUserId(userId: string): Promise<IGame[]> {
+    const user = await this.User.findOne({ userId: userId });
+    if (!user) return [];
+    const games = await this.Game.find({ userId: userId });
+    return games;
+  }
+
   async getUser(id: string): Promise<IUser | null> {
     const user = await this.User.findOne({ userId: id });
     if (!user) return null;

@@ -1,22 +1,17 @@
 import requests
-from requests import Session
 from src.auth import auth_menu
 from src.logged import logged_menu
-
-
-data = {}
+from src.session import session
 
 
 def main():
     while True:
+        token = session.cookies.get("token")
+        userId = session.cookies.get("userId")
         if token is None:
-            auth_result = auth_menu()
-            if auth_result is not None:
-                token, user = auth_result
-                data["token"] = token
-                data["user"] = user
+            auth_menu()
         else:
-            logged_menu(data)
+            logged_menu()
 
 
 if __name__ == "__main__":
