@@ -2,6 +2,8 @@ Protokoły sieci Web
 Mateusz Kurowski
 docker run --name hivemq-ce -d -p 1883:1883 hivemq/hivemq-ce
 
+w folderze `Backend` powinien znajdować się cert.pem i key.key
+
 HTTP:
 READ:4, czytanie danych usera, gry, gier, userów, czatu, czatów
 CREATE:4, tworzenie userów, gier, czatów, rozwiązania gry
