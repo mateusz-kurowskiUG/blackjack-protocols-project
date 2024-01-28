@@ -1,6 +1,7 @@
 import express, { Request, Response, Router } from "express";
 import { db } from "..";
 import jwt from "jsonwebtoken";
+import { mqttClient } from "../../mqtt";
 const router: Router = express.Router();
 
 const genToken = ({
@@ -28,20 +29,18 @@ router.post("/login", async (req: Request, res: Response) => {
     res.status(400).send({ loggedIn: false, message: "User not found" });
     return;
   }
-  console.log(user);
-
   const token = genToken({
     userId: user.userId,
     name: user.name,
     balance: user.balance,
   });
-  console.log({ token });
-
   res.cookie("token", token, { httpOnly: true });
   res.cookie("userId", user.userId, { httpOnly: true });
   res.cookie("username", user.name, { httpOnly: true });
   res.status(200).send({ loggedIn: true });
-  // res.status(200).send({ loggedIn: true, token: token, user });
+  setTimeout(() => {
+    mqttClient.publish(`users/${user.userId}`, "MQTT:You logged in");
+  }, 1000);
   return;
 });
 

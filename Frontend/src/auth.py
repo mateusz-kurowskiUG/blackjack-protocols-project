@@ -1,5 +1,6 @@
 from src.session import session
 import getpass
+import os
 
 
 def login(name, password):
@@ -27,8 +28,8 @@ def register(name, password):
 
 
 def auth_menu():
+    os.system("cls")
     print("1. Login", "2. Register", "3. Exit", sep="\n")
-
     choice = input("Enter choice: ")
     if choice in ["1", "2"]:
         username = input("Username: ").strip()
@@ -53,5 +54,6 @@ def auth_menu():
     elif choice == "3":
         exit()
     else:
+        os.system("cls")
         print("Invalid choice")
         auth_menu()

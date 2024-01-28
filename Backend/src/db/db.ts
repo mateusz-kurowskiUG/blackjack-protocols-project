@@ -31,9 +31,14 @@ export class Db {
     Promise.all([
       await this.deleteAllGames(),
       await this.deleteAllUsers(),
+      await this.deleteAllChats(),
     ]).then(() => {
       console.log("DB ready!");
     });
+  }
+
+  async deleteAllChats() {
+    await this.Chat.deleteMany({});
   }
 
   async authenticateUser(name, userPassword): Promise<IUser | false> {
@@ -43,6 +48,28 @@ export class Db {
     if (!match) return false;
     const { password: _, _id, __v, password, ...newUser } = user.toObject();
     return newUser;
+  }
+
+  async updateChat(
+    chatId: string,
+    userId: string,
+    params: object,
+  ): Promise<IChat | null> {
+    const chat = await this.Chat.findOne({ chatId: chatId, ownerId: userId });
+    if (!chat) return null;
+    const { name, password, newPassword } = params;
+    if (password && newPassword) {
+      const match = await bcrypt.compare(password, chat.password!);
+      if (!match) return null;
+      params["password"] = await bcrypt.hash(newPassword, 10);
+    }
+    const updatedChat = await this.Chat.findOneAndUpdate(
+      { chatId: chatId },
+      { name: name, password: params["password"] },
+    );
+    if (!updatedChat) return null;
+    const { _id, __v, ...newChat } = updatedChat.toObject();
+    return newChat;
   }
 
   async deleteAllGames() {
@@ -212,6 +239,11 @@ export class Db {
     const user = await this.User.findOne({ userId: userId });
     if (!user) return null;
     return user.name;
+  }
+
+  async getChatsByUserId(userId: string): Promise<IChat[]> {
+    const chats = await this.Chat.find({ ownerId: userId });
+    return chats;
   }
 
   async deletePrivateChat(userId: string, name: string) {

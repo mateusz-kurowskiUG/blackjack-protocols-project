@@ -16,13 +16,15 @@ router.post("/private", verifyToken, async (req: Request, res: Response) => {
   const userId = res.locals["userId"];
   const chat = await db.createPrivateChat(name, password, userId);
   if (!chat) return res.status(400).send("Chat already exists");
-  return res.status(201).send(chat);
+  mqttClient.publish(`chat/${name}`, "MQTT:Chat created");
+  return res.status(200).send(chat);
 });
 
 router.delete("/private", verifyToken, async (req: Request, res: Response) => {
   const { name } = req.body;
   const userId = res.locals["userId"];
-  const chat = await db.deletePrivateChat(userId, name);
+const chat = await db.deletePrivateChat(userId, name);
+  mqttClient.publish(`chat/${name}`, "MQTT:Chat deleted");
   if (!chat) return res.status(404).send("Chat not found");
   return res.status(200).send(chat);
 });
@@ -44,5 +46,18 @@ router.post(
     return res.status(200).send(auth);
   },
 );
+
+router.put("/:chatId", verifyToken, async (req: Request, res: Response) => {
+  const userId = res.locals["userId"];
+  const { chatId } = req.params;
+  const { name, password, newPassword } = req.body;
+  if (!name && !password && !newPassword)
+    return res.status(400).send("Nothing to update");
+  const updated = await db.updateChat(chatId, userId, {
+    name,
+    password,
+    newPassword,
+  });
+});
 
 export default router;

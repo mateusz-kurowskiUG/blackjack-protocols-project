@@ -3,11 +3,12 @@ from src.session import session
 from src.mqtt import mqtt_client,connect_to_public_chat,disconnect_from_public_chat,send_message_to_public_chat,print_message
 from src.public_chat import public_chat_menu
 from src.game import game_menu
-from src.private_chat import private_chat_menu
-
+from src.private_chat import private_chat_menu,show_chats
+import os
 def create_game(user):
     stake = -1
     while stake < 1 and stake > user["balance"]:
+        os.system("cls")
         stake_number = int(input("Enter stake: "))
         if stake_number < 1:
             print("Stake must be at least 1")
@@ -61,6 +62,7 @@ def logout():
 
 
 def get_balance():
+    os.system("cls")
     response = session.get(
         f"https://localhost:3000/users/balance/{session.cookies.get("userId")}",
         headers={"Authorization": session.cookies.get("token")},
@@ -173,54 +175,72 @@ def logged_menu():
         "8. Game history",
         "9. Enter public chat",
         "10. Enter/Create Private chat",
-        "11. Logout",
+        "11. Show your chats",
+        "12. Logout",
         sep="\n",
     )
     choice = input("Enter choice: ")
     if choice == "1":
+        os.system("cls")
         game_menu()
     elif choice == "2":
+        os.system("cls")
         users = get_users()
         if users is None:
             print("No users")
         else:
+            print("Name Balance")
             for user in users:
-                print(user)
+                print(f"{user["name"]} {user["balance"]}")
     elif choice == "3":
+        os.system("cls")
         input_name = input("Enter name: ")
         users = get_users(input_name)
         if users is None:
             print("No users")
         else:
+            print("Name Balance")
             for user in users:
-                print(user)
+                print(f"{user["name"]} {user["balance"]}")
     elif choice == "4":
+        os.system("cls")
         result = get_balance()
         print(result)
     elif choice == "5":
+        os.system("cls")
         result = get_user_data()
-        print(result)
+        print(f"{result["userId"]} {result["name"]} {result["balance"]}")
     elif choice == "6":
+        os.system("cls")
         result = delete_account()
         print(result)
     elif choice == "7":
+        os.system("cls")
         result = update_user_data()
         print(result)
     elif choice == "8":
+        os.system("cls")
         history = games_history()
         if history is None or len(history) == 0:
             print("No games")
         else:
-            for game in history:
-                print(game)
+            for i,game in enumerate(history):
+                print(f"{i}. {game["stake"]} {game["result"]}")
     elif choice == "9":
+        os.system("cls")
         print("Enter public chat")
         enter_all_chat()
     elif choice == "10":
+        os.system("cls")
         private_chat_menu()
     elif choice == "11":
+        os.system("cls")
+        show_chats()
+    elif choice == "12":
+        os.system("cls")
         if logout():
             return True
     else:
+        os.system("cls")
         print("Invalid choice")
         logged_menu()

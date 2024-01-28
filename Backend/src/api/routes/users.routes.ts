@@ -114,6 +114,23 @@ router.patch(
   },
 );
 
+router.get("/user/chats/:userIdParam", verifyToken, async (req, res) => {
+  const userId = res.locals["userId"];
+  const { userIdParam } = req.params;
+  if (!userId || !userIdParam || userIdParam !== userId) {
+    res.status(400).send({ message: "User not found" });
+    return;
+  }
+  const user = await db.getUser(userId);
+  if (!user) {
+    res.status(400).send({ message: "User not found" });
+    return;
+  }
+  const chats = await db.getChatsByUserId(userId);
+  res.status(200).send(chats);
+  return;
+});
+
 router.delete(
   "/:userIdParam",
   verifyToken,

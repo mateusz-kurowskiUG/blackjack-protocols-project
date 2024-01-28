@@ -50,6 +50,9 @@ router.post("/", verifyToken, async (req: Request, res: Response) => {
     res.status(400).send({ message: "Game not created" });
     return;
   }
+  setTimeout(() => {
+    mqttClient.publish(`game/${created.id}`, "MQTT:Game created");
+  }, 500);
   res.status(200).send(created);
   return;
 });

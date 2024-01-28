@@ -2,7 +2,6 @@ from src.session import session
 from src.mqtt import mqtt_client, subscribe_to_game
 from src.actions import action_menu, solve
 
-
 def print_hands(game):
     print("--------------------", f"Dealer's cards: {game['dealerCards']}",f"Your cards: {game['playerCards']}","-----------------", sep="\n")
 

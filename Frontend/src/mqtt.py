@@ -1,12 +1,8 @@
 import paho.mqtt.client as mqtt
 from src.session import session
-import certifi
 
 mqtt_client = mqtt.Client(transport="websockets")
 mqtt_client.connect("localhost", 8000, 60)
-mqtt_client.on_subscribe = lambda client, userdata, mid, granted_qos: print(
-    "subscribed"
-)
 
 
 def print_message(client, userdata, message):
@@ -16,13 +12,19 @@ def print_message(client, userdata, message):
 mqtt_client.on_message = print_message
 
 
-def connect_to_private_chat(chatId):
-    mqtt_client.subscribe(f"private/{chatId}")
+def connect_to_user_channel():
+    userId = session.cookies.get("userId")
+    mqtt_client.subscribe(f"users/{userId}")
     mqtt_client.loop_start()
 
 
-def disconnect_from_private_chat(chatId):
-    mqtt_client.unsubscribe(f"private/{chatId}")
+def connect_to_private_chat(name):
+    mqtt_client.subscribe(f"private/{name}")
+    mqtt_client.loop_start()
+
+
+def disconnect_from_private_chat(name):
+    mqtt_client.unsubscribe(f"private/{name}")
     mqtt_client.loop_stop()
 
 
