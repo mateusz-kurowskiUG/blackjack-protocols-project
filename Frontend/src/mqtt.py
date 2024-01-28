@@ -2,8 +2,8 @@ import paho.mqtt.client as mqtt
 from src.session import session
 import certifi
 
-mqtt_client = mqtt.Client()
-mqtt_client.connect("localhost", 1883, 60)
+mqtt_client = mqtt.Client(transport="websockets")
+mqtt_client.connect("localhost", 8000, 60)
 mqtt_client.on_subscribe = lambda client, userdata, mid, granted_qos: print(
     "subscribed"
 )
@@ -41,5 +41,12 @@ def disconnect_from_public_chat():
 
 
 def subscribe_to_game(gameId):
+    print("joined game notifications")
     mqtt_client.subscribe(f"game/{gameId}")
     mqtt_client.loop_start()
+
+
+def unsubscribe_from_game(gameId):
+    mqtt_client.unsubscribe(f"game/{gameId}")
+    print("left game notifications")
+    mqtt_client.loop_stop()

@@ -162,10 +162,11 @@ export class Db {
     gameId: string,
     userWinnings: number,
     status: string,
-  ): Promise<boolean> {
+  ): Promise<false | IGame> {
     const game = await this.Game.findOneAndUpdate(
-      { id: gameId, userId: userId },
+      { id: gameId },
       { status: status },
+      { new: true },
     );
     if (!game) return false;
     const updateUserBalance = await this.User.findOneAndUpdate(
@@ -173,7 +174,8 @@ export class Db {
       { $inc: { balance: userWinnings } },
     );
     if (!updateUserBalance) return false;
-    return true;
+    const { _id, __v, ...updatedGame } = game.toObject();
+    return updatedGame;
   }
 
   async deleteGame(id: string) {
@@ -186,6 +188,8 @@ export class Db {
       .deleteMany({ userId: userId });
     return games;
   }
+  async createChat(){}
+
   disconnect() {
     this.connection
       .close()

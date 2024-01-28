@@ -13,6 +13,8 @@ logowanie
 MQTT:
 czat publiczny
 prezentacja wyników
+prezentacja wylosowanej karty
+
 
 Inne:
 baza danych

@@ -3,6 +3,8 @@ from src.session import session
 from src.mqtt import mqtt_client,connect_to_public_chat,disconnect_from_public_chat,send_message_to_public_chat,print_message
 from src.public_chat import public_chat_menu
 from src.game import game_menu
+from src.private_chat import private_chat_menu
+
 def create_game(user):
     stake = -1
     while stake < 1 and stake > user["balance"]:
@@ -170,7 +172,8 @@ def logged_menu():
         "7. Change your data",
         "8. Game history",
         "9. Enter public chat",
-        "10. Logout",
+        "10. Enter/Create Private chat",
+        "11. Logout",
         sep="\n",
     )
     choice = input("Enter choice: ")
@@ -213,8 +216,9 @@ def logged_menu():
     elif choice == "9":
         print("Enter public chat")
         enter_all_chat()
-        
     elif choice == "10":
+        private_chat_menu()
+    elif choice == "11":
         if logout():
             return True
     else:

@@ -1,3 +1,5 @@
 import mqtt from "mqtt"; // require mqtt
-const mqttClient = mqtt.connect("mqtt://localhost"); // create a client
-export default mqttClient;
+import { Server } from "socket.io";
+export const mqttClient = mqtt.connect("mqtt://localhost"); // create a client
+
+export const io = new Server(3001, {});

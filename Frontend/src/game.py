@@ -1,6 +1,11 @@
 from src.session import session
 from src.mqtt import mqtt_client, subscribe_to_game
-from src.actions import action_menu
+from src.actions import action_menu, solve
+
+
+def print_hands(game):
+    print("--------------------", f"Dealer's cards: {game['dealerCards']}",f"Your cards: {game['playerCards']}","-----------------", sep="\n")
+
 
 
 def game_menu():
@@ -23,12 +28,22 @@ def game_menu():
         return None
     game = response.json()
     subscribe_to_game(game["id"])
-    while game["status"] != "completed":
+    while game["status"] not in ["won", "lost", "draw"]:
         game = session.get(
             f"https://localhost:3000/games/{game['id']}",
             headers={"Authorization": session.cookies.get("token")},
             verify=False,
         ).json()
-        print(f"Dealer's cards: {game['dealerCards']}")
-        print(f"Your cards: {game['playerCards']}")
-        game = action_menu(game)
+        print_hands(game)
+        if game["status"] == "completed":
+            print(f"Game result: completed")
+            break
+        if game["status"] == "stand":
+            solved = solve(game_id=game["id"])
+            if solved:
+                print(f"Game result: {solved["endedGame"]['status']}")
+                print_hands(solved["endedGame"])
+                
+            break
+        if game["status"] == "created":
+            action_menu(game)
