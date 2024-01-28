@@ -51,21 +51,21 @@ export class Db {
   }
 
   async updateChat(
-    chatId: string,
+    chatName: string,
     userId: string,
     params: object,
   ): Promise<IChat | null> {
-    const chat = await this.Chat.findOne({ chatId: chatId, ownerId: userId });
+    const chat = await this.Chat.findOne({ name: chatName, ownerId: userId });
     if (!chat) return null;
-    const { name, password, newPassword } = params;
+    const { password, newPassword } = params;
     if (password && newPassword) {
       const match = await bcrypt.compare(password, chat.password!);
       if (!match) return null;
       params["password"] = await bcrypt.hash(newPassword, 10);
     }
     const updatedChat = await this.Chat.findOneAndUpdate(
-      { chatId: chatId },
-      { name: name, password: params["password"] },
+      { name: chatName },
+      { name: chatName, password: params["password"] },
     );
     if (!updatedChat) return null;
     const { _id, __v, ...newChat } = updatedChat.toObject();

@@ -92,8 +92,45 @@ def join_your_private_chat():
         print("Wrong choice")
 
 
+def delete_private_chat():
+    response = session.get("https://localhost:3000/chats",headers={"Authorization": session.cookies.get("token")},verify=False)
+    if response.status_code != 200:
+        print("No chats available")
+        return
+    chats = response.json()
+    for i, chat in enumerate(chats):
+        print(i + 1, chat["name"], sep=". ")
+    choice = input("Enter choice: ")
+    if choice.isdigit():
+        choice = int(choice)
+        if choice == 0:
+            return
+        elif choice > 0 and choice <= len(chats):
+            chat = chats[choice - 1]
+            print("Deleting chat", chat["name"])
+            response2 = session.delete(f"https://localhost:3000/chats/private/{chat["name"]}",headers={"Authorization": session.cookies.get("token")},verify=False)
+            if response2.status_code == 200:
+                print("Chat deleted")
+            else:
+                print("Chat deletion failed")
+        else:
+            print("Wrong choice")
+
+
+def change_private_chat_data():
+    name = input("Enter name of the chat:\n")
+    password = input("Enter password of the chat:\n")
+    new_password = input("Enter new password of the chat:\n")
+    response = session.put(f"https://localhost:3000/chats/private/{name}",headers={"Authorization": session.cookies.get("token")},json={"password":password,"newPassword":new_password},verify=False)
+    if response.status_code == 200:
+        print("Chat data changed")
+    else:
+        print(response.json())
+        print("Chat data change failed")
+        
+    
 def private_chat_menu():
-    print("1. Create private chat", "2. Join private chat","3. Join chat with name", sep="\n")
+    print("1. Create private chat", "2. Join private chat","3. Join chat with name","4. delete chat","5. Change chat's password","Any other: Go back", sep="\n")
     choice = input("Enter choice: ")
     if choice == "1":
         create_private_chat()
@@ -101,5 +138,9 @@ def private_chat_menu():
         join_your_private_chat()
     elif choice=="3":
         join_by_name()
+    elif choice=="4":
+        delete_private_chat()
+    elif choice=="5":
+        change_private_chat_data()
     else:
         print("Wrong choice")

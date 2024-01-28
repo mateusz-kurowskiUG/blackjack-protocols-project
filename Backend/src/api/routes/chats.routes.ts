@@ -16,18 +16,39 @@ router.post("/private", verifyToken, async (req: Request, res: Response) => {
   const userId = res.locals["userId"];
   const chat = await db.createPrivateChat(name, password, userId);
   if (!chat) return res.status(400).send("Chat already exists");
-  mqttClient.publish(`chat/${name}`, "MQTT:Chat created");
+  mqttClient.publish(`users/${userId}`, "MQTT:Chat created");
   return res.status(200).send(chat);
 });
 
-router.delete("/private", verifyToken, async (req: Request, res: Response) => {
-  const { name } = req.body;
-  const userId = res.locals["userId"];
-const chat = await db.deletePrivateChat(userId, name);
-  mqttClient.publish(`chat/${name}`, "MQTT:Chat deleted");
-  if (!chat) return res.status(404).send("Chat not found");
-  return res.status(200).send(chat);
-});
+router.delete(
+  "/private/:chatName",
+  verifyToken,
+  async (req: Request, res: Response) => {
+    const { chatName } = req.params;
+    const userId = res.locals["userId"];
+    const chat = await db.deletePrivateChat(userId, chatName);
+    if (!chat) return res.status(404).send("Chat not found");
+    mqttClient.publish(`users/${userId}`, "MQTT:Chat deleted");
+    return res.status(200).send(chat);
+  },
+);
+
+router.put(
+  "/private/:chatName",
+  verifyToken,
+  async (req: Request, res: Response) => {
+    const userId = res.locals["userId"];
+    const { chatName } = req.params;
+    const { password, newPassword } = req.body;
+    if (!chatName && !password && !newPassword)
+      return res.status(400).send("Nothing to update");
+    const updated = await db.updateChat(chatName, userId, {
+      password,
+      newPassword,
+    });
+    return res.status(200).send(updated);
+  },
+);
 
 router.post(
   "/:chatName/join",
@@ -46,18 +67,5 @@ router.post(
     return res.status(200).send(auth);
   },
 );
-
-router.put("/:chatId", verifyToken, async (req: Request, res: Response) => {
-  const userId = res.locals["userId"];
-  const { chatId } = req.params;
-  const { name, password, newPassword } = req.body;
-  if (!name && !password && !newPassword)
-    return res.status(400).send("Nothing to update");
-  const updated = await db.updateChat(chatId, userId, {
-    name,
-    password,
-    newPassword,
-  });
-});
 
 export default router;

@@ -9,6 +9,7 @@ import authRoutes from "./routes/auth.routes";
 import { Db } from "../db/db";
 import { mqttClient, io } from "../mqtt";
 import chatRoutes from "./routes/chats.routes";
+import log from "./middlewares/logMiddleware";
 const privateKey = fs.readFileSync("./key", "utf8");
 const certificate = fs.readFileSync("./cert", "utf8");
 const credentials = {
@@ -24,8 +25,8 @@ app.use(bodyParser.json());
 app.use(cors());
 const port = 3000;
 const httpsServer = https.createServer(credentials, app);
-
 // register routes
+app.use(log);
 app.use("/users", usersRoutes);
 app.use("/games", gamesRoutes);
 app.use("/chats", chatRoutes);
