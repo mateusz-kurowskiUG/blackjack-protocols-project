@@ -3,10 +3,10 @@ Mateusz Kurowski
 docker run --name hivemq-ce -d -p 1883:1883 hivemq/hivemq-ce
 
 HTTP:
-GET:5
-POST:2
-PATCH:2
-DELETE:2
+READ:4, czytanie danych usera, gry, gier, userów, czatu, czatów
+CREATE:4, tworzenie userów, gier, czatów, rozwiązania gry
+UPDATE:4, update danych usera, gry x2, czatu
+DELETE:4 usera, gry, gier, czatu
 szukanie wg. wzorca
 logowanie
 
@@ -14,9 +14,11 @@ MQTT:
 czat publiczny
 prezentacja wyników
 prezentacja wylosowanej karty
-
+notyfikacje wszelkiej maści
+czaty prywatne
 
 Inne:
+logowanie do pliku
 baza danych
 cookie
 TLS

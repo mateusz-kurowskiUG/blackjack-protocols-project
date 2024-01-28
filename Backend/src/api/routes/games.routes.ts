@@ -57,6 +57,15 @@ router.post("/", verifyToken, async (req: Request, res: Response) => {
   return;
 });
 
+router.delete("/", verifyToken, async (req: Request, res: Response) => {
+  const deleted = await db.deleteGamesByUserId(res.locals["userId"]);
+  if (!deleted.deletedCount) {
+    res.status(400).send({ message: "Games not found" });
+    return;
+  }
+  res.status(200).send({ message: "Games deleted" });
+});
+
 router.delete("/:id", verifyToken, async (req: Request, res: Response) => {
   const { id } = req.params;
   const foundGame = await db.getGame(id);

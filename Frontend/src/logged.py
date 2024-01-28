@@ -157,6 +157,39 @@ def games_history():
         print("Games history get failed")
         return None
 
+def delete_game_history():
+    response = session.delete(f"https://localhost:3000/games",headers={"Authorization": session.cookies.get("token")},verify=False)
+    if response.status_code == 200:
+        print("Game history deleted")
+        return response.json()
+    else:
+        print(response.json())
+        print("Game history deletion failed")
+        return None
+    
+def delete_game_from_history():
+    games = games_history()
+    if games is None or len(games) == 0:
+        print("No games")
+        return None
+    print("--------Stake Status-----")
+    for i,game in enumerate(games):
+        print(f"{i}. {game["stake"]} {game["status"]}")
+    print("--------Stake Status-----")
+    game_number = int(input("Enter game number: "))
+    if game_number < 0 or game_number >= len(games):
+        print("Invalid game number")
+        return None
+    chosen = games[game_number]
+    response = session.delete(f"https://localhost:3000/games/{chosen["id"]}",headers={"Authorization": session.cookies.get("token")},verify=False)
+    if response.status_code == 200:
+        print("Game deleted")
+        return response.json()
+    else:
+        print(response.json())
+        print("Game deletion failed")
+        return None
+    
 def enter_all_chat():
     public_chat_menu()
 
@@ -176,7 +209,9 @@ def logged_menu():
         "9. Enter public chat",
         "10. Enter/Create Private chat",
         "11. Show your chats",
-        "12. Logout",
+        "12. Delete game history",
+        "13. Delete game FROM history",
+        "14. Logout",
         sep="\n",
     )
     choice = input("Enter choice: ")
@@ -224,8 +259,12 @@ def logged_menu():
         if history is None or len(history) == 0:
             print("No games")
         else:
+            print("--------Game history-----------")
+            print("Stake Status")
             for i,game in enumerate(history):
-                print(f"{i}. {game["stake"]} {game["result"]}")
+                print(f"{i}. {game["stake"]} {game["status"]}")
+            print("--------Game history-----------")
+            
     elif choice == "9":
         os.system("cls")
         print("Enter public chat")
@@ -237,6 +276,11 @@ def logged_menu():
         os.system("cls")
         show_chats()
     elif choice == "12":
+        os.system("cls")
+        delete_game_history()
+    elif choice == "13":
+        delete_game_from_history()
+    elif choice == "14":
         os.system("cls")
         if logout():
             return True
