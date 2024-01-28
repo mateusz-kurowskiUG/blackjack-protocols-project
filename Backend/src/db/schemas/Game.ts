@@ -1,7 +1,7 @@
 import { Schema } from "mongoose";
-import { IGame } from "../../interfaces/interfaces";
+import IGame from "../../interfaces/Game.model";
 
-export const Game = new Schema<IGame>({
+const GameSchema = new Schema<IGame>({
   id: {
     type: String,
     required: true,
@@ -34,3 +34,4 @@ export const Game = new Schema<IGame>({
     required: true,
   },
 });
+export default GameSchema;

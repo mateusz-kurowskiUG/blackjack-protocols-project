@@ -16,6 +16,16 @@ def print_message(client, userdata, message):
 mqtt_client.on_message = print_message
 
 
+def connect_to_private_chat(chatId):
+    mqtt_client.subscribe(f"private/{chatId}")
+    mqtt_client.loop_start()
+
+
+def disconnect_from_private_chat(chatId):
+    mqtt_client.unsubscribe(f"private/{chatId}")
+    mqtt_client.loop_stop()
+
+
 def connect_to_public_chat():
     hello_public()
     mqtt_client.subscribe("public")

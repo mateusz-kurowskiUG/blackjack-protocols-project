@@ -1,16 +1,22 @@
 "yse strict";
-import { Envs, IGame, IUser } from "../interfaces/interfaces";
 import mongoose from "mongoose";
 import { getEnvs } from "../utils";
-import { Game, User } from "./schemas/schemas";
 import bcrypt from "bcrypt";
 import { v4 as uuidv4 } from "uuid";
+import GameSchema from "./schemas/Game";
+import UserSchema from "./schemas/User";
+import IGame from "../interfaces/Game.model";
+import IUser from "../interfaces/User.model";
+import Envs from "../interfaces/Envs.model";
+import IChat from "../interfaces/Chat.model";
+import ChatSchema from "./schemas/Chat";
 
 export class Db {
   envs: Envs;
   connection: mongoose.Connection;
   User: mongoose.Model<IUser>;
   Game: mongoose.Model<IGame>;
+  Chat: mongoose.Model<IChat>;
   constructor() {
     this.envs = getEnvs();
     this.setUp();
@@ -19,8 +25,9 @@ export class Db {
   private async setUp() {
     this.connection = mongoose.createConnection(this.envs.ATLAS_URI);
     this.connection.useDb(this.envs.DB);
-    this.Game = this.connection.model<IGame>("Game", Game);
-    this.User = this.connection.model<IUser>("User", User);
+    this.Game = this.connection.model<IGame>("Game", GameSchema);
+    this.User = this.connection.model<IUser>("User", UserSchema);
+    this.Chat = this.connection.model<IChat>("Chat", ChatSchema);
     Promise.all([
       await this.deleteAllGames(),
       await this.deleteAllUsers(),
@@ -177,6 +184,53 @@ export class Db {
     const { _id, __v, ...updatedGame } = game.toObject();
     return updatedGame;
   }
+  async getChats(): Promise<IChat[]> {
+    const chats = await this.Chat.find({});
+    return chats;
+  }
+
+  async getChat(name: string): Promise<IChat | null> {
+    const chat = await this.Chat.findOne({ name: name });
+    if (!chat) return null;
+    const { _id, __v, ...newChat } = chat.toObject();
+    return newChat;
+  }
+
+  async createPrivateChat(name: string, password: string, userId: string) {
+    const found = await this.Chat.findOne({ name: name });
+    if (found) return false;
+    const chat = await this.Chat.create({
+      chatId: uuidv4(),
+      name: name,
+      password: await bcrypt.hash(password, 10),
+      ownerId: userId,
+    });
+    const { _id, __v, ...newChat } = chat.toObject();
+    return newChat;
+  }
+  async getUsername(userId: string): Promise<string | null> {
+    const user = await this.User.findOne({ userId: userId });
+    if (!user) return null;
+    return user.name;
+  }
+
+  async deletePrivateChat(userId: string, name: string) {
+    const chat = await this.Chat.findOneAndDelete({
+      name: name,
+      ownerId: userId,
+    });
+    if (!chat) return null;
+    const { _id, __v, ...newChat } = chat.toObject();
+    return newChat;
+  }
+
+  async AuthOnPrivateChat(name: string, password: string): Promise<boolean> {
+    const chat = await this.Chat.findOne({ name: name });
+    if (!chat) return false;
+    const match = await bcrypt.compare(password, chat.password!);
+    if (!match) return false;
+    return true;
+  }
 
   async deleteGame(id: string) {
     const game = await this.Game.deleteOne({ id: id });
@@ -188,7 +242,6 @@ export class Db {
       .deleteMany({ userId: userId });
     return games;
   }
-  async createChat(){}
 
   disconnect() {
     this.connection

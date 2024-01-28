@@ -1,7 +1,8 @@
 import express, { Request, Response, Router } from "express";
 import { db } from "..";
 import verifyToken from "../middlewares/authMiddleware";
-import mqttClient from "../../mqtt";
+import { mqttClient } from "../../mqtt";
+
 const router: Router = express.Router();
 router.get("/", verifyToken, async (req: Request, res: Response) => {
   const games = await db.getGames();

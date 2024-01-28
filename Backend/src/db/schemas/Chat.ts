@@ -1,22 +1,19 @@
 import { Schema } from "mongoose";
-import { IUser } from "../../interfaces/interfaces";
+import IChat from "../../interfaces/Chat.model";
 
-export const User = new Schema<IUser>({
-  userId: String,
-  name: {
+const ChatSchema = new Schema<IChat>({
+  chatId: {
     type: String,
     required: true,
     unique: true,
     trim: true,
   },
-  balance: {
-    type: Number,
-    required: true,
-    min: 0,
-  },
-  password: {
+  name: {
     type: String,
     required: true,
     trim: true,
   },
+  password: String,
+  ownerId: String,
 });
+export default ChatSchema;
